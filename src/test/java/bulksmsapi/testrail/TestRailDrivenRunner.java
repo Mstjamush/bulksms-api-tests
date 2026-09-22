@@ -2,11 +2,10 @@ package bulksmsapi.testrail;
 
 import bulksmsapi.config.Config;
 import bulksmsapi.runners.TestRunner;
+import org.jboss.logging.Logger;
 import org.junit.runner.JUnitCore;
 import org.junit.runner.Result;
 import org.junit.runner.notification.Failure;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
@@ -35,7 +34,7 @@ import java.util.stream.Collectors;
  */
 public class TestRailDrivenRunner {
 
-    private static final Logger log = LoggerFactory.getLogger(TestRailDrivenRunner.class);
+    private static final Logger LOG = Logger.getLogger(TestRailDrivenRunner.class);
 
     public static void main(String[] args) {
         boolean dryRun = Arrays.asList(args).contains("--dry-run");
@@ -48,7 +47,7 @@ public class TestRailDrivenRunner {
 
         List<TestRailCase> cases = client.getCases(projectId, suiteId);
         if (cases.isEmpty()) {
-            log.error("No cases found for this project/suite - nothing to run. Check "
+            LOG.error("No cases found for this project/suite - nothing to run. Check "
                     + "testrail.project_id/testrail.suite_id in testrail.properties.");
             System.exit(1);
         }
@@ -57,13 +56,13 @@ public class TestRailDrivenRunner {
         String tagExpression = caseIds.stream().map(id -> "@C" + id).collect(Collectors.joining(" or "));
 
         for (TestRailCase c : cases) {
-            log.info("  C{} - {}", c.id(), c.title());
+            LOG.infof("  C%d - %s", c.id(), c.title());
         }
 
         if (dryRun) {
-            log.info("--dry-run: not creating a run or executing anything.");
-            log.info("Tag filter that would be used: {}", tagExpression);
-            log.info("Tip: `grep -rlo '@C[0-9]*' src/test/resources/features` shows which of the above ids "
+            LOG.info("--dry-run: not creating a run or executing anything.");
+            LOG.infof("Tag filter that would be used: %s", tagExpression);
+            LOG.info("Tip: `grep -rlo '@C[0-9]*' src/test/resources/features` shows which of the above ids "
                     + "your feature files actually cover today.");
             return;
         }
@@ -76,14 +75,14 @@ public class TestRailDrivenRunner {
 
         Result result = JUnitCore.runClasses(TestRunner.class);
 
-        log.info("Ran {} scenario(s), {} failed.", result.getRunCount(), result.getFailureCount());
+        LOG.infof("Ran %d scenario(s), %d failed.", result.getRunCount(), result.getFailureCount());
         for (Failure failure : result.getFailures()) {
-            log.info(" - {}", failure.getTestHeader());
+            LOG.infof(" - %s", failure.getTestHeader());
         }
-        log.info("Results pushed to TestRail: {}/index.php?/runs/view/{}", Config.get("testrail.url"), runId);
+        LOG.infof("Results pushed to TestRail: %s/index.php?/runs/view/%d", Config.get("testrail.url"), runId);
 
         if (result.getRunCount() == 0) {
-            log.warn("0 scenarios matched. None of this suite's feature files currently have a @C<id> tag for "
+            LOG.warn("0 scenarios matched. None of this suite's feature files currently have a @C<id> tag for "
                     + "any case id fetched above - see the README's \"Mapping scenarios to TestRail cases\" section.");
         }
 

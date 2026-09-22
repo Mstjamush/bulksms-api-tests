@@ -7,8 +7,7 @@ import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,7 +21,7 @@ import java.util.Map;
  */
 public class TestRailClient {
 
-    private static final Logger log = LoggerFactory.getLogger(TestRailClient.class);
+    private static final Logger LOG = Logger.getLogger(TestRailClient.class);
     private static final int PAGE_SIZE = 250;
 
     private final String baseUrl;
@@ -46,7 +45,7 @@ public class TestRailClient {
     /** Reads every case in the given project (and suite, for multi-suite-mode projects), paging through results. */
     @SuppressWarnings("unchecked")
     public List<TestRailCase> getCases(int projectId, Integer suiteId) {
-        log.info("Reading cases from TestRail (project {}{})", projectId, suiteId != null ? ", suite " + suiteId : "");
+        LOG.infof("Reading cases from TestRail (project %d%s)", projectId, suiteId != null ? ", suite " + suiteId : "");
         List<TestRailCase> all = new ArrayList<>();
         int offset = 0;
 
@@ -73,7 +72,7 @@ public class TestRailClient {
             offset += PAGE_SIZE;
         }
 
-        log.info("Read {} case(s) from TestRail", all.size());
+        LOG.infof("Read %d case(s) from TestRail", all.size());
         return all;
     }
 
@@ -95,7 +94,7 @@ public class TestRailClient {
             throw new RuntimeException("TestRail add_run failed (" + resp.statusCode() + "): " + resp.asString());
         }
         int runId = resp.jsonPath().getInt("id");
-        log.info("Created TestRail run #{} ({}) with {} case(s)", runId, name, caseIds.size());
+        LOG.infof("Created TestRail run #%d (%s) with %d case(s)", runId, name, caseIds.size());
         return runId;
     }
 
@@ -107,9 +106,9 @@ public class TestRailClient {
 
         Response resp = spec().body(body).post("add_result_for_case/" + runId + "/" + caseId);
         if (resp.statusCode() == 200) {
-            log.info("Reported case {} (status {}) to TestRail run #{}", caseId, statusId, runId);
+            LOG.infof("Reported case %d (status %d) to TestRail run #%d", caseId, statusId, runId);
         } else {
-            log.error("TestRail add_result_for_case failed for case {} ({}): {}",
+            LOG.errorf("TestRail add_result_for_case failed for case %d (%d): %s",
                     caseId, resp.statusCode(), resp.asString());
         }
     }

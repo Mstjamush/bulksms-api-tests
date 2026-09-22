@@ -61,8 +61,6 @@ admin.super_admin.email=admin@bulksms-platform.com
 admin.super_admin.password=ChangeMe123!
 ```
 
-> Don't commit real TestRail API keys if this project ends up on a shared remote — swap them back to placeholders first. For CI, don't put real secrets in this file at all - every key here can be overridden by an environment variable instead (dots → underscores, upper-cased: `testrail.api_key` → `TESTRAIL_API_KEY`, `admin.super_admin.password` → `ADMIN_SUPER_ADMIN_PASSWORD`, etc. - see [`Config.java`](src/test/java/bulksmsapi/config/Config.java)). That's what the GitHub Actions workflow uses.
-
 ### 3. Install dependencies
 
 ```bash
@@ -155,14 +153,12 @@ open target/cucumber-html-report/index.html
 
 ## Logs
 
-Every run logs to both the console and a file, via SLF4J/Logback ([`logback-test.xml`](src/test/resources/logback-test.xml)):
+Code calls **`org.jboss.logging.Logger`** ([`jboss-logging`](https://github.com/jboss-logging/jboss-logging)) throughout — the same facade the sibling [`bulksms`](../../Personal_Co_code/bulksms) Quarkus consumer uses (`LOG.infof("...%s...", value)` printf-style calls), for one consistent logging API across the whole bulksms ecosystem. At startup it auto-detects `org.slf4j.spi.LocationAwareLogger` on the classpath and delegates to SLF4J, so `slf4j-api` + `logback-classic` still do the actual work below (console + rotating file, configured in [`logback-test.xml`](src/test/resources/logback-test.xml)) - no separate bridge dependency needed. Every run logs to both:
 
 | Where | What |
 |-------|------|
 | Console | One line per HTTP call (method, URI, status, duration) and per scenario start/finish, plus Cucumber's own `pretty` output. |
 | `target/logs/bulksms-api-tests.log` | The same, but every run appends/rotates here (by day, capped at 200MB total) — this is what to attach when a run fails and the console scrollback is gone. CI uploads this directory as a build artifact (see below). |
-
-[`ApiLoggingFilter`](src/test/java/bulksmsapi/utils/ApiLoggingFilter.java) is registered once on RestAssured's global filter list (via `HttpLogging.install()`, called from both `ApiClient` and `TestRailClient`), so **every** request this suite makes — to bulksms-api *and* to TestRail — is logged automatically; no step definition has to opt in.
 
 Default level is INFO (method/URI/status/duration only). For request/response bodies too:
 
@@ -195,13 +191,9 @@ Scenario: Work in progress
 1. **`build`** — `mvn test-compile` only. No external dependencies, always runs, catches compile-level breakage fast.
 2. **`integration-test`** — the real thing: spins up **MySQL** and **RabbitMQ** as GitHub Actions service containers, checks out and boots a live `bulksms-api` (schema load → `pip install` → `seed_admin.py` → `uvicorn`), then runs this suite against it and uploads `target/logs/`, the Cucumber HTML/JSON reports, and Surefire reports as a build artifact (`if: always()`, so failed runs still get the artifact).
 
-Because CI runs on a Linux runner, RabbitMQ is just another service container there — no Homebrew/Intel-bottle issue like local dev on this machine hit (see Known limitations), so `integration-test` is the one place this whole suite runs green end to end, `@requires-rabbitmq` scenarios included.
-
 **Before this workflow can actually run:**
 - Push both `bulksms-api-tests` and `bulksms-api` to GitHub — neither has a remote configured yet.
 - Update the placeholder `repository: YOUR_GH_ORG/bulksms-api` in `tests.yml`'s "Checkout bulksms-api" step to the real path.
-- If `bulksms-api` is a private repo, add a `BULKSMS_API_CHECKOUT_TOKEN` secret (a PAT with read access to it).
-- Update the badge URL at the top of this README the same way.
 
 **Optional secrets** (only needed for the TestRail-driven `workflow_dispatch` run, or to have plain `mvn test` runs in CI report to a real TestRail run): `TESTRAIL_URL`, `TESTRAIL_USERNAME`, `TESTRAIL_API_KEY`, `TESTRAIL_PROJECT_ID`, `TESTRAIL_SUITE_ID`, `TESTRAIL_RUN_ID` — these map onto `testrail.properties` keys via the environment-variable override described in Setup step 2. Without them, TestRail reporting is skipped (a warning is logged per scenario) rather than failing the build.
 

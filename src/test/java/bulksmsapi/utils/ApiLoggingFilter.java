@@ -5,8 +5,7 @@ import io.restassured.filter.FilterContext;
 import io.restassured.response.Response;
 import io.restassured.specification.FilterableRequestSpecification;
 import io.restassured.specification.FilterableResponseSpecification;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 
 /**
  * Logs every request/response that goes through RestAssured - registered
@@ -17,7 +16,7 @@ import org.slf4j.LoggerFactory;
  */
 public class ApiLoggingFilter implements Filter {
 
-    private static final Logger log = LoggerFactory.getLogger("bulksmsapi.http");
+    private static final Logger LOG = Logger.getLogger("bulksmsapi.http");
 
     @Override
     public Response filter(FilterableRequestSpecification requestSpec,
@@ -26,17 +25,17 @@ public class ApiLoggingFilter implements Filter {
         String method = requestSpec.getMethod();
         String uri = requestSpec.getURI();
 
-        if (log.isDebugEnabled() && requestSpec.getBody() != null) {
-            log.debug(">> {} {} body: {}", method, uri, requestSpec.getBody());
+        if (LOG.isDebugEnabled() && requestSpec.getBody() != null) {
+            LOG.debugf(">> %s %s body: %s", method, uri, requestSpec.getBody());
         }
 
         long startedAt = System.currentTimeMillis();
         Response response = ctx.next(requestSpec, responseSpec);
         long tookMs = System.currentTimeMillis() - startedAt;
 
-        log.info("{} {} -> {} ({} ms)", method, uri, response.getStatusCode(), tookMs);
-        if (log.isDebugEnabled()) {
-            log.debug("<< {} body: {}", response.getStatusCode(), response.getBody().asString());
+        LOG.infof("%s %s -> %d (%d ms)", method, uri, response.getStatusCode(), tookMs);
+        if (LOG.isDebugEnabled()) {
+            LOG.debugf("<< %d body: %s", response.getStatusCode(), response.getBody().asString());
         }
 
         return response;

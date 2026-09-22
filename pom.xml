@@ -16,6 +16,7 @@
         <junit.version>4.13.2</junit.version>
         <slf4j.version>2.0.16</slf4j.version>
         <logback.version>1.5.12</logback.version>
+        <jboss-logging.version>3.6.3.Final</jboss-logging.version>
         <exec-maven-plugin.version>3.2.0</exec-maven-plugin.version>
     </properties>
 
@@ -50,7 +51,18 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- Logging: console + rolling file, plus every HTTP call (see ApiLoggingFilter) -->
+        <!-- Logging: org.jboss.logging.Logger (same facade as the sibling bulksms
+             Quarkus consumer, for a consistent logging API across the whole
+             ecosystem) - it auto-detects org.slf4j.spi.LocationAwareLogger on the
+             classpath at startup and delegates to SLF4J, so slf4j-api +
+             logback-classic below still do the actual work (console + rolling
+             file, see logback-test.xml) with no separate bridge needed. -->
+        <dependency>
+            <groupId>org.jboss.logging</groupId>
+            <artifactId>jboss-logging</artifactId>
+            <version>${jboss-logging.version}</version>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>

@@ -7,8 +7,7 @@ import bulksmsapi.testrail.TestRailClient;
 import io.cucumber.java.After;
 import io.cucumber.java.Before;
 import io.cucumber.java.Scenario;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 
 /**
  * Reports every @C<id>-tagged scenario's outcome to TestRail after it runs.
@@ -21,7 +20,7 @@ import org.slf4j.LoggerFactory;
  */
 public class TestRailHooks {
 
-    private static final Logger log = LoggerFactory.getLogger(TestRailHooks.class);
+    private static final Logger LOG = Logger.getLogger(TestRailHooks.class);
     private static final TestRailClient testRail = new TestRailClient();
 
     private long startedAtMs;
@@ -31,13 +30,13 @@ public class TestRailHooks {
         ResponseContext.clear();
         ClientAdminContext.clear();
         startedAtMs = System.currentTimeMillis();
-        log.info("--- Starting: {} [{}] ---", scenario.getName(), String.join(" ", scenario.getSourceTagNames()));
+        LOG.infof("--- Starting: %s [%s] ---", scenario.getName(), String.join(" ", scenario.getSourceTagNames()));
     }
 
     @After
     public void afterScenario(Scenario scenario) {
         long elapsedSeconds = (System.currentTimeMillis() - startedAtMs) / 1000;
-        log.info("--- Finished: {} -> {} ({}s) ---", scenario.getName(), scenario.getStatus(), elapsedSeconds);
+        LOG.infof("--- Finished: %s -> %s (%ds) ---", scenario.getName(), scenario.getStatus(), elapsedSeconds);
 
         if (Boolean.parseBoolean(System.getProperty("testrail.disabled", "false"))) return;
 
@@ -46,8 +45,8 @@ public class TestRailHooks {
 
         Integer runId = resolveRunId();
         if (runId == null) {
-            log.warn("TestRail: no run configured (testrail.run.id system property or "
-                    + "testrail.run_id in testrail.properties) - skipping report for case {}", caseId);
+            LOG.warnf("TestRail: no run configured (testrail.run.id system property or "
+                    + "testrail.run_id in testrail.properties) - skipping report for case %d", caseId);
             return;
         }
 
