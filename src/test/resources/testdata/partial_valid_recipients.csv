@@ -1,0 +1,4 @@
+phone_number,message
+254712345678,Valid row - has a phone number
+,Blank phone number - should be counted invalid and dropped
+254798765432,Another valid row

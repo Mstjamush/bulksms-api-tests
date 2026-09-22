@@ -1,0 +1,1 @@
+This is a plain text file - .txt is not one of the supported bulk upload formats (.csv, .xlsx, .xlsm).
