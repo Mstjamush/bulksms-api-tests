@@ -3,11 +3,9 @@
 [![bulksms-api-tests](https://github.com/YOUR_GH_ORG/bulksms-api-tests/actions/workflows/tests.yml/badge.svg)](https://github.com/YOUR_GH_ORG/bulksms-api-tests/actions/workflows/tests.yml)
 <!-- Badge points at a placeholder org/repo until this project is pushed to GitHub - see "Continuous Integration" below. -->
 
-Automated API test suite for [`bulksms-api`](../../Personal_Co_code/bulksms-api), built with **Cucumber 7**, **REST Assured 5**, and **JUnit 4** — same stack as [`Leave_Manager_RestAssured_BDDTests`](../Leave_Manager_RestAssured_BDDTests) in this folder. Every request and scenario is logged to console and to a file (see [Logs](#logs)), and a GitHub Actions pipeline runs the suite against a real bulksms-api on every push (see [Continuous Integration](#continuous-integration)).
+Automated API test suite for [`bulksms-api`](../../Personal_Co_code/bulksms-api), built with **Cucumber 7**, **REST Assured 5**, and **JUnit 4** . Every request and scenario is logged to console and to a file (see [Logs](#logs)), and a GitHub Actions pipeline runs the suite against a real bulksms-api on every push (see [Continuous Integration](#continuous-integration)).
 
-It covers both halves of the API, positive and negative, across 39 scenarios:
-- the public SMS ingestion endpoints (`/api/v1/sms`, `/api/v1/sms/bulk`, `/health`), signed with the `X-Api-Key`/`X-Timestamp`/`X-Signature` scheme described in the API's own README;
-- the admin API's full RBAC surface (`/auth/login`, `/me`, `/roles`, `/sender-id-types`, `/clients`, `/users`, `/senders`, `/bulk-campaigns/insert`) — including the Super Administrator vs. Client Administrator boundary, using real client/user fixtures the suite provisions through the API itself (see [`AdminFixtures`](src/test/java/bulksmsapi/utils/AdminFixtures.java)).
+It covers both halves of the API, positive and negative scenarios:
 
 Two ways to run it against **TestRail**:
 1. **`mvn test`** — runs everything, and reports each `@C<id>`-tagged scenario's result to a TestRail run you created manually (same pattern as `Leave_Manager_RestAssured_BDDTests`).
