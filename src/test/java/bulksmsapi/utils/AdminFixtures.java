@@ -43,6 +43,36 @@ public final class AdminFixtures {
     }
 
     /**
+     * Credits the client's wallet (as the super admin, whatever the active
+     * session is). New clients start at zero and billing is enforced, so any
+     * scenario that sends needs this first.
+     */
+    public static void topUp(int clientId, String amountKes) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("amount", amountKes);
+        body.put("reference", "QA-" + RandomData.uniqueSuffix());
+        body.put("note", "Automated suite credit");
+        Response resp = ApiClient.superAdminSpec().body(JsonUtil.toJsonObject(body))
+                .post("/api/v1/admin/billing/clients/" + clientId + "/topup");
+        if (resp.statusCode() != 200) {
+            throw new IllegalStateException("Fixture: top-up failed (" + resp.statusCode() + "): " + resp.asString());
+        }
+    }
+
+    /** Caller must be the client administrator; returns the new sender's short code. */
+    public static String createSender() {
+        String shortCode = "QA" + RandomData.uniqueSuffix().toUpperCase();
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("short_code", shortCode);
+        body.put("send_type_id", 1);
+        Response resp = ApiClient.adminAuthedSpec().body(JsonUtil.toJsonObject(body)).post("/api/v1/admin/senders");
+        if (resp.statusCode() != 200) {
+            throw new IllegalStateException("Fixture: create sender failed (" + resp.statusCode() + "): " + resp.asString());
+        }
+        return shortCode;
+    }
+
+    /**
      * Caller must already be authenticated as an identity allowed to create
      * users (super admin, or - for their own client - a client administrator).
      * clientId is only honoured when the caller is the super admin; a client

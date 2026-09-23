@@ -76,14 +76,21 @@ jobs:
           cache: pip
           cache-dependency-path: bulksms-api/requirements.txt
 
-      - name: Load bulksms-api schema
-        run: mysql -h127.0.0.1 -uroot -pr00t sms < bulksms-api/schema.sql
-
       - name: Install bulksms-api
         working-directory: bulksms-api
         run: |
           pip install -r requirements.txt
           cp .env.example .env
+
+      # schema.sql (outbound tables), then the legacy platform tables the admin
+      # API builds on (clients, user, sender_id...; commit sms_platform_schema.sql
+      # into the bulksms-api repo for this), then migrations/*.sql.
+      - name: Load schemas and apply migrations
+        working-directory: bulksms-api
+        run: |
+          mysql -h127.0.0.1 -uroot -pr00t sms < schema.sql
+          mysql -h127.0.0.1 -uroot -pr00t sms < sms_platform_schema.sql
+          python -m app.migrate
 
       - name: Seed bootstrap admin
         working-directory: bulksms-api
@@ -98,6 +105,11 @@ jobs:
             sleep 1
           done
           echo "bulksms-api did not become healthy in time"; cat uvicorn.log; exit 1
+
+      # Scheduled campaigns are dispatched by the separate scheduler process.
+      - name: Start bulksms-api scheduler
+        working-directory: bulksms-api
+        run: nohup python -m app.scheduler > scheduler.log 2>&1 &
 
       - name: Run tests (mvn test)
         if: ${{ github.event.inputs.testrail_driven != 'true' }}
@@ -132,5 +144,6 @@ jobs:
             bulksms-api-tests/target/cucumber.json
             bulksms-api-tests/target/surefire-reports/**
             bulksms-api/uvicorn.log
+            bulksms-api/scheduler.log
           if-no-files-found: warn
           retention-days: 14
