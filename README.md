@@ -3,7 +3,7 @@
 [![bulksms-api-tests](https://github.com/YOUR_GH_ORG/bulksms-api-tests/actions/workflows/tests.yml/badge.svg)](https://github.com/YOUR_GH_ORG/bulksms-api-tests/actions/workflows/tests.yml)
 <!-- Badge points at a placeholder org/repo until this project is pushed to GitHub - see "Continuous Integration" below. -->
 
-Automated API test suite for [`bulksms-api`](../../Personal_Co_code/bulksms-api), built with **Cucumber 7**, **REST Assured 5**, and **JUnit 4** . Every request and scenario is logged to console and to a file (see [Logs](#logs)), and a GitHub Actions pipeline runs the suite against a real bulksms-api on every push (see [Continuous Integration](#continuous-integration)).
+Automated API test suite for [`bulksms-api`](https://github.com/Mstjamush/bulksms-api), built with **Cucumber 7**, **REST Assured 5**, and **JUnit 4** . Every request and scenario is logged to console and to a file (see [Logs](#logs)), and a GitHub Actions pipeline runs the suite against a real bulksms-api on every push (see [Continuous Integration](#continuous-integration)).
 
 It covers both halves of the API, positive and negative scenarios:
 
