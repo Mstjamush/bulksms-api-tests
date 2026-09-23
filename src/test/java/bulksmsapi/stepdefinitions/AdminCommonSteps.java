@@ -25,9 +25,27 @@ public class AdminCommonSteps {
      * the super admin. */
     @Given("I am authenticated as a client administrator for a new client")
     public void iAmAuthenticatedAsAClientAdministratorForANewClient() {
+        provisionClientAdministrator(true);
+    }
+
+    /** Billing is enforced, so a client that should be able to send gets KES 1000 of credit. */
+    @Given("I am authenticated as a client administrator for a new client with no credit")
+    public void iAmAuthenticatedAsAClientAdministratorForANewClientWithNoCredit() {
+        provisionClientAdministrator(false);
+    }
+
+    @Given("a sender has been provisioned for my client")
+    public void aSenderHasBeenProvisionedForMyClient() {
+        ClientAdminContext.setLastSenderShortCode(AdminFixtures.createSender());
+    }
+
+    private void provisionClientAdministrator(boolean withCredit) {
         AdminSession.loginAsSuperAdmin();
         AdminFixtures.ProvisionedClient client = AdminFixtures.createClient();
         AdminFixtures.ProvisionedUser clientAdmin = AdminFixtures.createUser(client.clientId(), AdminRoles.CLIENT_ADMIN);
+        if (withCredit) {
+            AdminFixtures.topUp(client.clientId(), "1000");
+        }
         ClientAdminContext.setClient(client);
         AdminSession.login(clientAdmin.email(), clientAdmin.password());
     }

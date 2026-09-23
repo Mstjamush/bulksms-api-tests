@@ -2,6 +2,7 @@ package bulksmsapi.hooks;
 
 import bulksmsapi.config.Config;
 import bulksmsapi.stepdefinitions.ClientAdminContext;
+import bulksmsapi.stepdefinitions.ScenarioData;
 import bulksmsapi.stepdefinitions.ResponseContext;
 import bulksmsapi.testrail.TestRailClient;
 import io.cucumber.java.After;
@@ -29,6 +30,7 @@ public class TestRailHooks {
     public void beforeScenario(Scenario scenario) {
         ResponseContext.clear();
         ClientAdminContext.clear();
+        ScenarioData.clear();
         startedAtMs = System.currentTimeMillis();
         LOG.infof("--- Starting: %s [%s] ---", scenario.getName(), String.join(" ", scenario.getSourceTagNames()));
     }

@@ -31,12 +31,14 @@ Two ways to run it against **TestRail**:
 In `bulksms-api/` (see its README for full detail):
 
 ```bash
-mysql -uroot -pr00t sms < schema.sql   # once
-docker compose up -d                    # RabbitMQ
+mysql -uroot -pr00t sms < schema.sql && mysql -uroot -pr00t sms < ../sms_platform_schema.sql   # fresh DB only
+python -m app.migrate                   # every time bulksms-api changes - applies migrations/*.sql
+docker compose up -d rabbitmq           # optional - see "Run without RabbitMQ"
 source .venv/bin/activate && pip install -r requirements.txt
 cp .env.example .env
 python seed_admin.py                    # once - bootstraps the Super Administrator
-uvicorn app.main:app --reload --port 8000
+uvicorn app.main:app --port 8000        # the API
+python -m app.scheduler                 # scheduled campaigns (a second terminal)
 ```
 
 `seed_admin.py` always creates the same bootstrap login (`admin@bulksms-platform.com` / `ChangeMe123!`), which is already the default in this suite's config below — you only need to change it if you've since changed that account's password.
@@ -68,6 +70,21 @@ mvn dependency:resolve
 ```
 
 ---
+
+## Coverage
+
+| Feature file | Cases | Covers |
+|---|---|---|
+| `single_sms.feature`, `bulk_sms.feature` | C3010-C3016, C3020-C3029 | public single send; bulk upload in all three file shapes (`phone_number,message` · template over `phone_number,name,amount` · `phone_number` + one message), `.xls`, background outcome checked through the uploads report |
+| `public_api_client.feature` | C3130-C3136 | sends as a known, billed client (`X-Api-Client`): charged pages x rate, own-sender rule, unknown client, `phone_number` alias, invalid number, 402 without credit |
+| `admin_broadcast_lists.feature` | C3090-C3098 | list upload, placeholders from columns, **duplicates reported with row and reason** (repeated in file / already on list), import history + skipped-rows CSV, `.xls`, bad files, paging, client isolation |
+| `admin_templates.feature` | C3100-C3104 | templates, unique names, preview rendering with defaults, unknown placeholders, UCS-2 page counting |
+| `admin_campaigns.feature` | C3110-C3119 | send-now and scheduled campaigns, estimate = pages x rate, cancel once, past `send_at`, per-row message files, paging + CSV export, 402 without credit |
+| `admin_billing.feature` | C3120-C3127 | idempotent top-ups, client can't top up itself, plan fee + allowance + rate, bundles (units + remainder), bundle request approve/reject, soonest-expiring credit spent first, ledger |
+| `admin_reports.feature` | C3140-C3144 | overview (with billing), daily points, daily CSV, `X-Total-Count` paging |
+| `admin_*` (auth, clients, users, senders, bulk campaigns), `health.feature` | C3001, C3030-C3081 | the original admin and health coverage |
+
+Every client the suite provisions gets KES 1000 of credit from the Super Administrator (billing is enforced, so an unfunded client is refused with 402); scenarios that need an unfunded client say so ("…for a new client with no credit"). Upload fixtures live in `src/test/resources/testdata/`; `loans.xls` is a real legacy-Excel file built by `tools/make_xls.py` (no Excel or extra library needed to regenerate it).
 
 ## Mapping scenarios to TestRail cases
 

@@ -79,4 +79,30 @@ public final class ApiClient {
     public static void setAdminToken(String token) {
         adminToken = token;
     }
+
+    /** Current admin session, for multipart uploads (RestAssured sets the multipart content type). */
+    public static RequestSpecification adminAuthedMultipartSpec() {
+        if (adminToken == null || adminToken.isBlank()) {
+            throw new IllegalStateException("No admin token - log in first (see AdminSession/AdminAuthSteps)");
+        }
+        return baseSpec().header("Authorization", "Bearer " + adminToken);
+    }
+
+    /**
+     * The Super Administrator, independently of whichever admin the scenario
+     * is currently acting as - for mid-scenario actions only a super admin can
+     * take (top-ups, bundle approvals) without switching the active session.
+     */
+    public static RequestSpecification superAdminSpec() {
+        return baseSpec().contentType(ContentType.JSON).header("Authorization", "Bearer " + AdminSession.superAdminToken());
+    }
+
+    /**
+     * A public-API call as a known, billed client (X-Api-Client). The API's
+     * AUTH_TEST_MODE (this suite's default) trusts the header unsigned; the
+     * signed per-client path is covered by the @requires-signing scenarios.
+     */
+    public static RequestSpecification clientApiSpec(int apiClientId) {
+        return baseSpec().contentType(ContentType.JSON).header("X-Api-Client", String.valueOf(apiClientId));
+    }
 }
